@@ -97,7 +97,7 @@ for epoch in epoch_iterator:
         _, predicted = torch.max(logits.data, 1)
         correct_reviews_in_batch = (predicted == labels).sum().item()
         train_correct_total += correct_reviews_in_batch
-
+        #break
     print('Epoch {} - Loss {:.2f}'.format(epoch + 1, epoch_loss / len(train_indices)))
 
     # Validation Loop
@@ -118,7 +118,7 @@ for epoch in epoch_iterator:
             _, predicted = torch.max(logits.data, 1)
             correct_reviews_in_batch = (predicted == labels).sum().item()
             val_correct_total += correct_reviews_in_batch
-
+            #break
         train_acc = train_correct_total * 100 / len(train_indices)
         val_acc = val_correct_total * 100 / len(val_indices)
 

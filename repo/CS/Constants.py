@@ -1,4 +1,5 @@
-import torch
+import torch,os
+from pathlib import Path
 
 
 task = 'sentiment'
@@ -17,3 +18,7 @@ print(DEVICE)
 
 FINETUNED_MODEL_SAVE_PATH="../../models/CS/"+task+"/"+dataset+"/"
 PRETRAINED_MODEL_PATH= "../../models/bert-base-cased"
+my_file = Path(FINETUNED_MODEL_SAVE_PATH)
+
+if not my_file.exists():
+    os.makedirs(FINETUNED_MODEL_SAVE_PATH)
