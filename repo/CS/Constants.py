@@ -1,9 +1,10 @@
 import torch
 
-task = 'topic'
+task = 'sentiment'
+dataset = 'imdb'
 SEP_TOKEN = '[SEP]'
 CLS_TOKEN = '[CLS]'
-TRAIN_FILE_PATH = '/Users/muhammadabdullah/Downloads/sarcasmv2/Sarcasm_Headlines_Dataset_v2.json'
+TRAIN_FILE_PATH = '../data/'+task+'/'+dataset+'/'
 MAX_SEQ_LENGTH = 512
 BATCH_SIZE = 4
 NUM_EPOCHS = 2
@@ -13,5 +14,5 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(DEVICE)
 
 NUM_CLS = 7
-CKPT_SAVE_PATH="../models/CS/"+task+"/"
+CKPT_SAVE_PATH="../models/CS/"+task+"/"+dataset+"/"
 PRETRAINED_MODEL_PATH= "../models/bert-base-cased"
