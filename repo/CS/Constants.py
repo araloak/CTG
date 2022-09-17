@@ -15,5 +15,5 @@ WARMUP_STEPS = 3
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(DEVICE)
 
-CKPT_SAVE_PATH="../../models/CS/"+task+"/"+dataset+"/"
+FINETUNED_MODEL_SAVE_PATH="../../models/CS/"+task+"/"+dataset+"/"
 PRETRAINED_MODEL_PATH= "../../models/bert-base-cased"
