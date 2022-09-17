@@ -1,6 +1,6 @@
 import torch
 
-task = 'topic'
+task = 'sentiment'
 SEP_TOKEN = '[SEP]'
 CLS_TOKEN = '[CLS]'
 TRAIN_FILE_PATH = '/Users/muhammadabdullah/Downloads/sarcasmv2/Sarcasm_Headlines_Dataset_v2.json'
