@@ -69,6 +69,7 @@ training_acc_list, validation_acc_list = [], []
 for epoch in epoch_iterator:
     epoch_loss = 0.0
     train_correct_total = 0
+    best_val_acc = 0
 
     # Training Loop
     train_iterator = tqdm(train_loader, desc="Train Iteration")
@@ -97,8 +98,6 @@ for epoch in epoch_iterator:
         correct_reviews_in_batch = (predicted == labels).sum().item()
         train_correct_total += correct_reviews_in_batch
 
-        break
-
     print('Epoch {} - Loss {:.2f}'.format(epoch + 1, epoch_loss / len(train_indices)))
 
     # Validation Loop
@@ -119,12 +118,20 @@ for epoch in epoch_iterator:
             _, predicted = torch.max(logits.data, 1)
             correct_reviews_in_batch = (predicted == labels).sum().item()
             val_correct_total += correct_reviews_in_batch
-            break
-        training_acc_list.append(train_correct_total * 100 / len(train_indices))
-        validation_acc_list.append(val_correct_total * 100 / len(val_indices))
-        print('Training Accuracy {:.4f} - Validation Accurracy {:.4f}'.format(
-            train_correct_total * 100 / len(train_indices), val_correct_total * 100 / len(val_indices)))
 
+        train_acc = train_correct_total * 100 / len(train_indices)
+        val_acc = val_correct_total * 100 / len(val_indices)
+
+        training_acc_list.append(train_acc)
+        validation_acc_list.append(val_acc)
+        print('Training Accuracy {:.4f} - Validation Accurracy {:.4f}'.format(
+            train_acc, val_acc))
+        if best_val_acc < val_acc:
+            best_val_acc = val_acc
+            # 保存
+            torch.save(model.state_dict(), FINETUNED_MODEL_SAVE_PATH+"bert_val_acc_"+str(val_acc)+".pt")
+            # 读取
+            # the_model.load_state_dict(torch.load(PATH))
 
 # text = 'I am a big fan of cricket'
 # text = '[CLS] ' + text + ' [SEP]'
