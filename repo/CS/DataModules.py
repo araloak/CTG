@@ -1,36 +1,56 @@
 import re
 
 import pandas as pd
+from bs4 import BeautifulSoup
 from torch.utils.data import Dataset
 
 from Constants import *
 
+#Removing the html strips
+def strip_html(text):
+    soup = BeautifulSoup(text, "html.parser")
+    return soup.get_text()
+
+#Removing the square brackets
+def remove_between_square_brackets(text):
+    return re.sub('\[[^]]*\]', '', text)
+
+#Removing the noisy text
+def denoise_text(text):
+    text = strip_html(text)
+    text = remove_between_square_brackets(text)
+    return text
+
 
 class SequenceDataset(Dataset):
     def __init__(self, dataset_file_path, tokenizer, regex_transformations={}):
-        # Read JSON file and assign to headlines variable (list of strings)
-        df = pd.read_json(dataset_file_path, lines=True)
-        df = df.drop(['article_link'], axis=1)
-        self.headlines = df.values
-        # Regex Transformations can be used for data cleansing.
-        # e.g. replace
-        #   '\n' -> ' ',
-        #   'wasn't -> was not
+        # Read JSON file and assign to data variable (list of strings)
+        # df = pd.read_json(dataset_file_path, lines=True)
+        # df = df.drop(['article_link'], axis=1)
+        self.data = pd.read_csv(TRAIN_FILE_PATH)
+        # Apply function on review column
+        self.data['review'] = self.data['review'].apply(denoise_text)
+        #self.data['label'] = self.data['sentiment']
+
+        # self.data = df.values
         self.regex_transformations = regex_transformations
         self.tokenizer = tokenizer
+        self.num_class = len(self.data['sentiment'].unique())
 
     def __len__(self):
-        return len(self.headlines)
+        return len(self.data)
 
     def __getitem__(self, index):
-        is_sarcastic, headline = self.headlines[index]
+        label = self.data['sentiment'][index]
+        label = 1 if label =='positive' else 0
+        text = self.data['review'][index]
         for regex, value_to_replace_with in self.regex_transformations.items():
-            headline = re.sub(regex, value_to_replace_with, headline)
+            text = re.sub(regex, value_to_replace_with, text)
 
         # Convert input string into tokens with the special BERT Tokenizer which can handle out-of-vocabulary words using subgrams
-        # e.g. headline = Here is the sentence I want embeddings for.
+        # e.g. text = Here is the sentence I want embeddings for.
         #      tokens = [here, is, the, sentence, i, want, em, ##bed, ##ding, ##s, for, .]
-        tokens = self.tokenizer.tokenize(headline)
+        tokens = self.tokenizer.tokenize(text)[:MAX_SEQ_LENGTH-3]
 
         # Add [CLS] at the beginning and [SEP] at the end of the tokens list for classification problems
         tokens = [CLS_TOKEN] + tokens + [SEP_TOKEN]
@@ -56,4 +76,4 @@ class SequenceDataset(Dataset):
         return torch.tensor(input_ids, dtype=torch.long, device=DEVICE), \
                torch.tensor(segment_ids, dtype=torch.long, device=DEVICE), \
                torch.tensor(input_mask, device=DEVICE), \
-               torch.tensor(is_sarcastic, dtype=torch.long, device=DEVICE)
+               torch.tensor(label, dtype=torch.long, device=DEVICE)

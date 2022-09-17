@@ -11,13 +11,17 @@ from DataModules import SequenceDataset
 from Utils import seed_everything
 
 seed_everything()
+# Initialize BERT tokenizer
+# tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_PATH,do_lower_case=False,max_len=MAX_SEQ_LENGTH)
+train_dataset = SequenceDataset(TRAIN_FILE_PATH, tokenizer)
 
 # Load BERT default config object and make necessary changes as per requirement
 config = BertConfig(hidden_size=768,
                     num_hidden_layers=12,
                     num_attention_heads=12,
                     intermediate_size=3072,
-                    num_labels=NUM_CLS,
+                    num_labels=train_dataset.num_class,
                     do_lower_case=False
                    )
 
@@ -25,12 +29,8 @@ config = BertConfig(hidden_size=768,
 model = BertClassifier(config,PRETRAINED_MODEL_PATH)
 model.to(DEVICE)
 
-# Initialize BERT tokenizer
-# tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_PATH,do_lower_case=False)
-
 # Load Train dataset and split it into Train and Validation dataset
-train_dataset = SequenceDataset(TRAIN_FILE_PATH, tokenizer)
+
 
 validation_split = 0.2
 dataset_size = len(train_dataset)
