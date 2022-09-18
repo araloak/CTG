@@ -13,6 +13,7 @@ def strip_html(text):
 
 #Removing the square brackets
 def remove_between_square_brackets(text):
+    text = re.sub(r'[\\]', ' ', text)
     return re.sub('\[[^]]*\]', '', text)
 
 #Removing the noisy text
@@ -27,23 +28,22 @@ class SequenceDataset(Dataset):
         # Read JSON file and assign to data variable (list of strings)
         # df = pd.read_json(dataset_file_path, lines=True)
         # df = df.drop(['article_link'], axis=1)
-        self.data = pd.read_csv(TRAIN_FILE_PATH)
+        self.data = pd.read_csv(dataset_file_path)
         # Apply function on review column
-        self.data['review'] = self.data['review'].apply(denoise_text)
+        self.data['Description'] = self.data['Description'].apply(denoise_text)
         #self.data['label'] = self.data['sentiment']
 
         # self.data = df.values
         self.regex_transformations = regex_transformations
         self.tokenizer = tokenizer
-        self.num_class = len(self.data['sentiment'].unique())
+        self.num_class = len(self.data['Class Index'].unique())
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, index):
-        label = self.data['sentiment'][index]
-        label = 1 if label =='positive' else 0
-        text = self.data['review'][index]
+        label = int(self.data['Class Index'][index]) - 1
+        text = self.data['Description'][index]
         for regex, value_to_replace_with in self.regex_transformations.items():
             text = re.sub(regex, value_to_replace_with, text)
 
