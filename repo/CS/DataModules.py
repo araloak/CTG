@@ -54,7 +54,8 @@ class SequenceDataset(Dataset):
         # e.g. text = Here is the sentence I want embeddings for.
         #      tokens = [here, is, the, sentence, i, want, em, ##bed, ##ding, ##s, for, .]
         tokens = self.tokenizer.tokenize(text)[:MAX_SEQ_LENGTH-3]
-        seq_length =len(tokens) #不考虑CLS与SEP
+        seq_length = len(tokens)
+
 
         # Add [CLS] at the beginning and [SEP] at the end of the tokens list for classification problems
         tokens = [CLS_TOKEN] + tokens + [SEP_TOKEN]
