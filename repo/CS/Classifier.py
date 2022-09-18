@@ -11,13 +11,18 @@ from DataModules import SequenceDataset
 from Utils import seed_everything
 
 seed_everything()
+# Initialize BERT tokenizer
+# tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_PATH,do_lower_case=False,max_len=MAX_SEQ_LENGTH)
+train_dataset = SequenceDataset(TRAIN_FILE_PATH, tokenizer)
+val_dataset = SequenceDataset(VAL_FILE_PATH, tokenizer)
 
 # Load BERT default config object and make necessary changes as per requirement
 config = BertConfig(hidden_size=768,
                     num_hidden_layers=12,
                     num_attention_heads=12,
                     intermediate_size=3072,
-                    num_labels=NUM_CLS,
+                    num_labels=train_dataset.num_class,
                     do_lower_case=False
                    )
 
@@ -25,22 +30,21 @@ config = BertConfig(hidden_size=768,
 model = BertClassifier(config,PRETRAINED_MODEL_PATH)
 model.to(DEVICE)
 
-# Initialize BERT tokenizer
-# tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_PATH,do_lower_case=False)
-
 # Load Train dataset and split it into Train and Validation dataset
-train_dataset = SequenceDataset(TRAIN_FILE_PATH, tokenizer)
 
-validation_split = 0.2
-dataset_size = len(train_dataset)
-indices = list(range(dataset_size))
-split = int(np.floor(validation_split * dataset_size))
+
+#validation_split = 0.2
+train_dataset_size = len(train_dataset)
+val_dataset_size = len(val_dataset)
+train_indices = list(range(train_dataset_size))
+val_indices = list(range(val_dataset_size))
+#split = int(np.floor(validation_split * dataset_size))
 shuffle_dataset = True
 
 if shuffle_dataset :
-    np.random.shuffle(indices)
-train_indices, val_indices = indices[split:], indices[:split]
+    np.random.shuffle(train_indices)
+    np.random.shuffle(val_indices)
+#train_indices, val_indices = indices[split:], indices[:split]
 
 train_sampler = SubsetRandomSampler(train_indices)
 validation_sampler = SubsetRandomSampler(val_indices)
@@ -69,6 +73,7 @@ training_acc_list, validation_acc_list = [], []
 for epoch in epoch_iterator:
     epoch_loss = 0.0
     train_correct_total = 0
+    best_val_acc = 0
 
     # Training Loop
     train_iterator = tqdm(train_loader, desc="Train Iteration")
@@ -89,16 +94,14 @@ for epoch in epoch_iterator:
         epoch_loss += loss.item()
 
         if (step + 1) % GRADIENT_ACCUMULATION_STEPS == 0:
-            scheduler.step()
             optimizer.step()
+            scheduler.step()
             model.zero_grad()
 
         _, predicted = torch.max(logits.data, 1)
         correct_reviews_in_batch = (predicted == labels).sum().item()
         train_correct_total += correct_reviews_in_batch
-
-        break
-
+        #break
     print('Epoch {} - Loss {:.2f}'.format(epoch + 1, epoch_loss / len(train_indices)))
 
     # Validation Loop
@@ -119,12 +122,20 @@ for epoch in epoch_iterator:
             _, predicted = torch.max(logits.data, 1)
             correct_reviews_in_batch = (predicted == labels).sum().item()
             val_correct_total += correct_reviews_in_batch
-            break
-        training_acc_list.append(train_correct_total * 100 / len(train_indices))
-        validation_acc_list.append(val_correct_total * 100 / len(val_indices))
-        print('Training Accuracy {:.4f} - Validation Accurracy {:.4f}'.format(
-            train_correct_total * 100 / len(train_indices), val_correct_total * 100 / len(val_indices)))
+            #break
+        train_acc = train_correct_total * 100 / len(train_indices)
+        val_acc = val_correct_total * 100 / len(val_indices)
 
+        training_acc_list.append(train_acc)
+        validation_acc_list.append(val_acc)
+        print('Training Accuracy {:.4f} - Validation Accurracy {:.4f}'.format(
+            train_acc, val_acc))
+        if best_val_acc < val_acc:
+            best_val_acc = val_acc
+            # 保存
+            torch.save(model.state_dict(), FINETUNED_MODEL_SAVE_PATH+"bert_val_acc_"+str(val_acc)+".pt")
+            # 读取
+            # the_model.load_state_dict(torch.load(PATH))
 
 # text = 'I am a big fan of cricket'
 # text = '[CLS] ' + text + ' [SEP]'
