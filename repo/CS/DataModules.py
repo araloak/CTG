@@ -42,8 +42,11 @@ class SequenceDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, index):
-        label = int(self.data['Class Index'][index]) - 1
-        text = self.data['Description'][index]
+
+        label = self.data['sentiment'][index]
+        label = 1 if label =='positive' else 0
+        text = self.data['review'][index]
+
         for regex, value_to_replace_with in self.regex_transformations.items():
             text = re.sub(regex, value_to_replace_with, text)
 
@@ -51,6 +54,7 @@ class SequenceDataset(Dataset):
         # e.g. text = Here is the sentence I want embeddings for.
         #      tokens = [here, is, the, sentence, i, want, em, ##bed, ##ding, ##s, for, .]
         tokens = self.tokenizer.tokenize(text)[:MAX_SEQ_LENGTH-3]
+        seq_length =len(tokens) #不考虑CLS与SEP
 
         # Add [CLS] at the beginning and [SEP] at the end of the tokens list for classification problems
         tokens = [CLS_TOKEN] + tokens + [SEP_TOKEN]
@@ -76,4 +80,5 @@ class SequenceDataset(Dataset):
         return torch.tensor(input_ids, dtype=torch.long, device=DEVICE), \
                torch.tensor(segment_ids, dtype=torch.long, device=DEVICE), \
                torch.tensor(input_mask, device=DEVICE), \
-               torch.tensor(label, dtype=torch.long, device=DEVICE)
+               torch.tensor(label, dtype=torch.long, device=DEVICE), \
+               torch.tensor(seq_length, dtype=torch.long, device=DEVICE)
