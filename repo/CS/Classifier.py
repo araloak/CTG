@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader, SubsetRandomSampler
 from tqdm import tqdm, trange
 
 from BertModules import BertClassifier
+from BertModulesDIYAtten import BertClassifierDIYAtten
 from Constants import *
 from DataModules import SequenceDataset
 from Utils import seed_everything
@@ -27,7 +28,7 @@ config = BertConfig(hidden_size=768,
                    )
 
 # Create our custom BERTClassifier model object
-model = BertClassifier(config,PRETRAINED_MODEL_PATH)
+model = BertClassifierDIYAtten(config,PRETRAINED_MODEL_PATH)
 model.to(DEVICE)
 
 # Load Train dataset and split it into Train and Validation dataset
@@ -83,7 +84,8 @@ for epoch in epoch_iterator:
         inputs = {
             'input_ids': batch[0].to(DEVICE),
             'token_type_ids': batch[1].to(DEVICE),
-            'attention_mask': batch[2].to(DEVICE)
+            'attention_mask': batch[2].to(DEVICE),
+            'seq_lengths': batch[4].to(DEVICE),
         }
 
         labels = batch[3].to(DEVICE)
@@ -113,7 +115,8 @@ for epoch in epoch_iterator:
             inputs = {
                 'input_ids': batch[0].to(DEVICE),
                 'token_type_ids': batch[1].to(DEVICE),
-                'attention_mask': batch[2].to(DEVICE)
+                'attention_mask': batch[2].to(DEVICE),
+                'seq_lengths': batch[4].to(DEVICE),
             }
 
             labels = batch[3].to(DEVICE)

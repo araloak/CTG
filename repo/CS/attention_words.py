@@ -1,4 +1,5 @@
-from transformers import BertTokenizer, BertConfig
+import torch
+from pytorch_transformers import BertTokenizer, BertConfig
 import  argparse
 
 from BertModules import BertClassifier
@@ -11,7 +12,10 @@ parser.add_argument('--input_dir', default='../../data/'+task+'/'+dataset+'/test
 parser.add_argument('--output_dir', default='../../data/'+task+'/'+dataset+'/test_data_result.txt')
 args = parser.parse_args()
 
-NUM_LABEL = 2
+if task == "sentiment" and dataset == "imdb":
+    NUM_LABEL = 2
+elif task == "topic" and dataset == "agnews":
+    NUM_LABEL = 4
 
 def getAttention(output,layer,head):
     res = output[2]
@@ -57,7 +61,7 @@ def getTopWord(first_attention_score,index_of_sample=0):
         else:
             break
 
-def drawAttention(inputs,first_attention_score,head=0):
+def drawAttention(inputs,first_attention_score,head="mean"):
     import matplotlib.pyplot as plt
     import pandas as pd
     import matplotlib.ticker as ticker
@@ -68,7 +72,14 @@ def drawAttention(inputs,first_attention_score,head=0):
     #print(temp)
     tokens= bert_tokenizer.convert_ids_to_tokens(temp)
     #print(type(tokens)) # <class 'list'>
-    print(tokens) # ['[CLS]', 'it', 'is', ...]
+    #print(tokens) # ['[CLS]', 'it', 'is', ...]
+
+    for i in range(len(tokens) - 1, -1,
+                   -1):  # 倒序循环，从最后一个元素循环到第一个元素。不能用正序循环，因为正序循环删除元素后，后续的列表的长度和元素下标同时也跟着变了，由于len(alist)是动态的。
+        if tokens[i] == '[PAD]':
+            tokens.pop(i)
+    tokens.remove('[SEP]')
+    res2 = res2[:len(tokens),:len(tokens)]
 
     # tokens就是我们的横纵坐标(标签)
     df = pd.DataFrame(res2, columns=tokens, index=tokens)
@@ -82,8 +93,8 @@ def drawAttention(inputs,first_attention_score,head=0):
     ax.yaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
     ax.set_xticklabels([''] + list(df.columns))
     ax.set_yticklabels([''] + list(df.index))
-    name = "./"+str(head)+".png"
-    #plt.savefig(name) # 存储图片
+    name = '../../data/'+task+'/'+dataset+'/test_data_attentions_'+str(head)+".png"
+    plt.savefig(name) # 存储图片
     plt.show()
 
 seed_everything()
@@ -98,8 +109,9 @@ config = BertConfig(hidden_size=768,
 
 # Create our custom BERTClassifier model object
 model = BertClassifier(config,PRETRAINED_MODEL_PATH).to(DEVICE)
-#bert = torch.load(PRETRAINED_MODEL_PATH)
-#bert.load_state_dict(FINETUNED_MODEL_SAVE_PATH)
+state_dict = torch.load(FINETUNED_MODEL_SAVE_PATH+"/best_model.pt")
+model.load_state_dict(state_dict)
+
 model.eval()
 lines = open(args.input_dir, encoding="utf8").readlines()
 
@@ -135,11 +147,23 @@ input_masks = torch.stack(input_mask)
 results = []
 for input_id, segment_id, input_mask in zip(input_ids, segment_ids, input_masks):
     with torch.no_grad():
-        output = model.prob(input_ids=input_id.unsqueeze(0), token_type_ids=segment_id.unsqueeze(0),
+        all_head_attention_score = torch.zeros([512,512]).cuda()
+        output, polarity = model.prob(input_ids=input_id.unsqueeze(0), token_type_ids=segment_id.unsqueeze(0),
                       attention_mask=input_mask.unsqueeze(0))
+        _, predicted = torch.max(polarity, 1)
+        print("plority score:",polarity)
+        print("sentiment label:",predicted)
+
+        layer_head_attention_score = getAttention(output, 11, 5)
+        drawAttention(input_id, layer_head_attention_score, 5)
+
         for head in range(12):
             layer_head_attention_score = getAttention(output, 11, head)
-            drawAttention(input_id, layer_head_attention_score)
+            all_head_attention_score+=layer_head_attention_score
+            drawAttention(input_id, layer_head_attention_score,head)
+        # all_head_attention_score/=12
+        # drawAttention(input_id, all_head_attention_score)
+        break
 
 # 写入结果
 # with open(args.output_dir,"w",encoding="utf8") as f:
