@@ -8,7 +8,8 @@ dataset = 'imdb'
 SEP_TOKEN = '[SEP]'
 CLS_TOKEN = '[CLS]'
 TRAIN_FILE_PATH = '../../data/'+task+'/'+dataset+'/IMDB Dataset.csv'
-VAL_FILE_PATH = '../../data/'+task+'/'+dataset+'/test.csv'
+#VAL_FILE_PATH = '../../data/'+task+'/'+dataset+'/test.csv'
+
 MAX_SEQ_LENGTH = 512
 BATCH_SIZE = 4
 NUM_EPOCHS = 6
