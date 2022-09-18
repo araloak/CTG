@@ -16,7 +16,7 @@ seed_everything()
 # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_PATH,do_lower_case=False,max_len=MAX_SEQ_LENGTH)
 train_dataset = SequenceDataset(TRAIN_FILE_PATH, tokenizer)
-val_dataset = SequenceDataset(VAL_FILE_PATH, tokenizer)
+#val_dataset = SequenceDataset(VAL_FILE_PATH, tokenizer)
 
 # Load BERT default config object and make necessary changes as per requirement
 config = BertConfig(hidden_size=768,
@@ -34,18 +34,15 @@ model.to(DEVICE)
 # Load Train dataset and split it into Train and Validation dataset
 
 
-#validation_split = 0.2
-train_dataset_size = len(train_dataset)
-val_dataset_size = len(val_dataset)
-train_indices = list(range(train_dataset_size))
-val_indices = list(range(val_dataset_size))
-#split = int(np.floor(validation_split * dataset_size))
+validation_split = 0.2
+dataset_size = len(train_dataset)
+indices = list(range(dataset_size))
+split = int(np.floor(validation_split * dataset_size))
 shuffle_dataset = True
 
 if shuffle_dataset :
-    np.random.shuffle(train_indices)
-    np.random.shuffle(val_indices)
-#train_indices, val_indices = indices[split:], indices[:split]
+    np.random.shuffle(indices)
+train_indices, val_indices = indices[split:], indices[:split]
 
 train_sampler = SubsetRandomSampler(train_indices)
 validation_sampler = SubsetRandomSampler(val_indices)
