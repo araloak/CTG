@@ -2,12 +2,12 @@ import torch,os
 from pathlib import Path
 
 
-task = 'topic'
-dataset = 'agnews'
+task = 'sentiment'
+dataset = 'imdb'
 
 SEP_TOKEN = '[SEP]'
 CLS_TOKEN = '[CLS]'
-TRAIN_FILE_PATH = '../../data/'+task+'/'+dataset+'/train.csv'
+TRAIN_FILE_PATH = '../../data/'+task+'/'+dataset+'/IMDB Dataset.csv'
 VAL_FILE_PATH = '../../data/'+task+'/'+dataset+'/test.csv'
 MAX_SEQ_LENGTH = 512
 BATCH_SIZE = 4
