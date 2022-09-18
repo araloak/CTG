@@ -28,15 +28,15 @@ class SequenceDataset(Dataset):
         # Read JSON file and assign to data variable (list of strings)
         # df = pd.read_json(dataset_file_path, lines=True)
         # df = df.drop(['article_link'], axis=1)
-        self.data = pd.read_csv(dataset_file_path)
+        self.data = pd.read_csv(TRAIN_FILE_PATH)
         # Apply function on review column
-        self.data['Description'] = self.data['Description'].apply(denoise_text)
+        self.data['review'] = self.data['review'].apply(denoise_text)
         #self.data['label'] = self.data['sentiment']
 
         # self.data = df.values
         self.regex_transformations = regex_transformations
         self.tokenizer = tokenizer
-        self.num_class = len(self.data['Class Index'].unique())
+        self.num_class = len(self.data['sentiment'].unique())
 
     def __len__(self):
         return len(self.data)
