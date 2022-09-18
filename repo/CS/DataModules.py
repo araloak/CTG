@@ -42,8 +42,11 @@ class SequenceDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, index):
-        label = int(self.data['Class Index'][index]) - 1
-        text = self.data['Description'][index]
+
+        label = self.data['sentiment'][index]
+        label = 1 if label =='positive' else 0
+        text = self.data['review'][index]
+
         for regex, value_to_replace_with in self.regex_transformations.items():
             text = re.sub(regex, value_to_replace_with, text)
 
@@ -52,6 +55,7 @@ class SequenceDataset(Dataset):
         #      tokens = [here, is, the, sentence, i, want, em, ##bed, ##ding, ##s, for, .]
         tokens = self.tokenizer.tokenize(text)[:MAX_SEQ_LENGTH-3]
         seq_length = len(tokens)
+
 
         # Add [CLS] at the beginning and [SEP] at the end of the tokens list for classification problems
         tokens = [CLS_TOKEN] + tokens + [SEP_TOKEN]

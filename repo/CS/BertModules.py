@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from transformers import BertModel
+from pytorch_transformers import BertModel
     
 class BertClassifier(nn.Module):
     def __init__(self, config,model_path):
@@ -31,7 +31,8 @@ class BertClassifier(nn.Module):
     def prob(self, input_ids, token_type_ids=None, attention_mask=None,
                 position_ids=None, head_mask=None):
 
-        outputs = self.bert(input_ids, position_ids=position_ids, token_type_ids=token_type_ids,attention_mask=attention_mask, head_mask=head_mask,output_attentions=True)
-
-        return outputs
+        outputs = self.bert(input_ids, position_ids=position_ids, token_type_ids=token_type_ids,attention_mask=attention_mask, head_mask=head_mask)
+        pooled_output = outputs[1]
+        polarity = self.classifier(pooled_output)
+        return outputs, polarity
                                   

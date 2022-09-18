@@ -86,6 +86,7 @@ for epoch in epoch_iterator:
             'token_type_ids': batch[1].to(DEVICE),
             'attention_mask': batch[2].to(DEVICE),
             'seq_lengths': batch[4].to(DEVICE)
+
         }
 
         labels = batch[3].to(DEVICE)
@@ -117,6 +118,7 @@ for epoch in epoch_iterator:
                 'token_type_ids': batch[1].to(DEVICE),
                 'attention_mask': batch[2].to(DEVICE),
                 'seq_lengths': batch[4].to(DEVICE)
+
             }
 
             labels = batch[3].to(DEVICE)
