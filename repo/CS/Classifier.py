@@ -94,8 +94,8 @@ for epoch in epoch_iterator:
         epoch_loss += loss.item()
 
         if (step + 1) % GRADIENT_ACCUMULATION_STEPS == 0:
-            scheduler.step()
             optimizer.step()
+            scheduler.step()
             model.zero_grad()
 
         _, predicted = torch.max(logits.data, 1)
